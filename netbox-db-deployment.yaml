@@ -1,0 +1,36 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: netbox-db-deployment
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: netbox-db
+    spec:
+      containers:
+        - name: netbox-db
+          image: postgres:9.6.2
+          env:
+            - name: POSTGRES_USER
+              value: netbox
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secret
+                  key: db_password
+            - name: POSTGRES_DB
+              value: netbox
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - mountPath: /var/lib/postgresql
+              name: netbox-db-data
+      restartPolicy: Always
+      volumes:
+        - name: netbox-db-data
+          emptyDir: {}
+        - name: netbox-secret
+          secret:
+            secretName: netbox-secret

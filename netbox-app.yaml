@@ -1,0 +1,11 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: netbox-app
+spec:
+  selector:
+    app: netbox-app
+  ports:
+    - protocol: "TCP"
+      port: 80
+  type: NodePort

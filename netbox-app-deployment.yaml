@@ -1,0 +1,93 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: netbox-app-deployment
+spec:
+  replicas: 2
+  template:
+    metadata:
+      labels:
+        app: netbox-app
+    spec:
+      containers:        
+        - name: netbox-nginx
+          image: yteraoka/netbox-nginx:1.11.10
+          command:
+            - nginx          
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - mountPath: /opt/netbox/netbox/static
+              name: netbox-static-files
+        - name: netbox-app
+          image: yteraoka/netbox:1.8.3
+          env:
+            - name: SUPERUSER_NAME
+              value: admin
+            - name: SUPERUSER_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secret
+                  key: email_address
+            - name: SUPERUSER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secret
+                  key: superuser_password
+            - name: ALLOWED_HOSTS
+              value: '*'
+            - name: DB_NAME
+              value: netbox
+            - name: DB_USER
+              value: netbox
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secret
+                  key: db_password
+            - name: DB_HOST
+              value: netbox-db
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secret
+                  key: secret_key
+            - name: EMAIL_SERVER
+              value: smtp.gmail.com
+            - name: EMAIL_PORT
+              value: "587"
+            - name: EMAIL_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secret
+                  key: email_address
+            - name: EMAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secret
+                  key: email_password
+            - name: EMAIL_TIMEOUT
+              value: "10"
+            - name: EMAIL_FROM
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secret
+                  key: email_address
+            - name: NETBOX_USERNAME
+              value: guest
+            - name: NETBOX_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: netbox-secret
+                  key: netbox_password
+          volumeMounts:
+            - mountPath: /opt/netbox/netbox/static
+              name: netbox-static-files
+      restartPolicy: Always
+      volumes:
+        - name: netbox-static-files
+          emptyDir: {}
+
+        - name: netbox-secret
+          secret:
+            secretName: netbox-secret
